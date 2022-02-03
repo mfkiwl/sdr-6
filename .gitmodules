@@ -1,0 +1,6 @@
+[submodule "libraries/kalman-cpp"]
+	path = libraries/kalman-cpp
+	url = git@github.com:hmartiro/kalman-cpp.git
+[submodule "libraries/yaml-cpp"]
+	path = libraries/yaml-cpp
+	url = git@github.com:jbeder/yaml-cpp.git
