@@ -70,23 +70,24 @@ sdr::orientation_t sdr::Pose::calculate_delta_orientation(const float delta_yaw,
         throw sdr::DetailedException(__func__, __LINE__, msg) ;
     }
 
-    const sdr::orientation_t rot_matrix_yaw{ // whether we're facing left or right
-                                               {1.f,0.f,0.f},
-                                               {0.f,std::cos(delta_yaw),std::asin(delta_yaw)},
-                                               {0.f,std::sin(delta_yaw),std::cos(delta_yaw)}
-                                           } ;
 
-    const sdr::orientation_t rot_matrix_pitch{ // whether we're facing up or down
+    const sdr::orientation_t rot_matrix_yaw{ // rotation around z axis (left/right)
+                                                {std::cos(delta_yaw),std::asin(delta_yaw),0.f},
+                                                {std::sin(delta_yaw),std::cos(delta_yaw),0.f},
+                                                {0.f,0.f,1.f}
+                                            } ;
+
+    const sdr::orientation_t rot_matrix_pitch{ // rotation around y axis (up/down)
                                                  {std::cos(delta_pitch),0.f,std::sin(delta_pitch)},
                                                  {0.f,1.f,0.f},
                                                  {std::asin(delta_pitch),0.f,std::cos(delta_pitch)}
                                              } ;
 
-    const sdr::orientation_t rot_matrix_roll{ // how its rotating on its side (will not be used for cars etc.)
-                                                {std::cos(delta_roll),std::asin(delta_roll),0.f},
-                                                {std::sin(delta_roll),std::cos(delta_roll),0.f},
-                                                {0.f,0.f,1.f}
-                                            } ;
+    const sdr::orientation_t rot_matrix_roll{ // rotation around x axis (tilting) (won't be applicable to cars etc.)
+                                               {1.f,0.f,0.f},
+                                               {0.f,std::cos(delta_roll),std::asin(delta_roll)},
+                                               {0.f,std::sin(delta_roll),std::cos(delta_roll)}
+                                           } ;
 
     const sdr::orientation_t delta_orientation = rot_matrix_yaw * rot_matrix_pitch * rot_matrix_roll ;
     return delta_orientation ;

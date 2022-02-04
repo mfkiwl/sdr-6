@@ -78,9 +78,9 @@ namespace sdr {
 
             /**
               * @brief calculate_delta_orientation - calculate local change based on heading and gyro data
-              * @param const float - yaw angle (rotation around caertesian z axis)
-              * @param const float - pitch angle (rotation around caertesian y axis)
-              * @param const float - roll angle (rotation around caertesian x axis)
+              * @param const float - yaw angle (rotation *around* caertesian z axis) (left/right)
+              * @param const float - pitch angle (rotation *around* caertesian y axis) (up/down)
+              * @param const float - roll angle (rotation *around* caertesian x axis) (tilting)
               * @throws sdr::DetailedException - thrown in case of calculated values involving Nans
               * @return sdr::orientation_t - deduced change in orientation
               */
