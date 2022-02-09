@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <argp.h>
 
 #include "preprocessing.hpp"
@@ -17,7 +18,7 @@
     static char doc[] = "sdr -- a simple dead reckoning application" ; // general program documentation
     const char* argp_program_bug_address = "salih.msa@outlook.com" ;
     static struct argp_option options[] = {
-        {"pose", 'p', "YAML_FILE", 0, "Reads an initial YAML file containing initial position & orientation in a world"},
+        {"initial_pose", 'p', "YAML_FILE", 0, "Reads an initial YAML file containing initial position & orientation in a world"},
         {0}
     } ;
     struct arguments {
@@ -65,7 +66,7 @@
 int main(int argc, char** argv)
 {
     /* Initialisation */
-    struct arguments arguments;
+    struct arguments arguments ;
     arguments.initial_pose_file = nullptr ;
     static struct argp argp = { // argp - The ARGP structure itself
         options, // options
@@ -75,25 +76,27 @@ int main(int argc, char** argv)
     } ;
     argp_parse(&argp, argc, argv, 0, 0, &arguments); // override default arguments if provided
 
-    sdr::Pose pose ;
-
+    sdr::Pose pose ; // empty 0 default initialisation
     if(arguments.initial_pose_file)
     {
         pose = sdr::extract_initial_pose(std::string(arguments.initial_pose_file)) ; // actually extract information from given file
     }
 
-    for(int i = 0 ; i < 2 ; ++i)
+    std::fstream input(std::string{arguments.args[0]}) ;
+    while(!input.eof())
     {
-        const float distance_x = 1.f ;
-        const float distance_y = 0.f ;
-        const float distance_z = 0.f ;
+        float distance_x = 0.f ;
+        float distance_y = 0.f ;
+        float distance_z = 0.f ;
 
-        const float angle_x = 0.785398 ;
-        const float angle_y = 0.f ;
-        const float angle_z = 0.f ;
+        float delta_yaw = 0.f ;
+        float delta_pitch = 0.f ;
+        float delta_roll = 0.f ;
+
+        input >> distance_x >> distance_y >> distance_z >> delta_yaw >> delta_pitch >> delta_roll ;
 
         pose.update_position(distance_x, distance_y, distance_z) ;
-        pose.update_orientation(angle_x, angle_y, angle_z) ;
+        pose.update_orientation(delta_yaw, delta_pitch, delta_roll) ;
         std::cout << "Global position:\n\t" << pose.position() << std::endl ;
         std::cout << "Global orientation:\n\t" << pose.orientation() << std::endl ;
     }

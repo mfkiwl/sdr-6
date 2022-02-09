@@ -11,7 +11,8 @@
 namespace sdr {
 
     using position_t = Eigen::Matrix<float, 1, 3> ; // 1 * 3 matrix (xyz position)
-    using orientation_t = Eigen::Matrix<float, 3, 3> ; // 3 * 3 matrix (rot. matrix)
+    using rotation_m_t = Eigen::Matrix<float, 3, 3> ; // 3 * 3 matrix (rot. matrix)
+    using quaternion_t = Eigen::Quaternion<float, Eigen::AutoAlign> ; // 4 * 1 matrix
 
     class Pose {
             /**
@@ -20,7 +21,7 @@ namespace sdr {
        private:
             position_t _position ;
 
-            orientation_t _orientation ;
+            rotation_m_t _orientation ;
 
         public:
             /**
@@ -31,9 +32,9 @@ namespace sdr {
             /**
               * @brief Pose (constructor) - assesses and sets assigned values
               * @param const sdr::position_t - initial specified position
-              * @param const sdr::orientation_t - initial specified orientation (rotation matrix format)
+              * @param const sdr::quaternion_t - initial specified orientation (quaternions - rotation matrix handled internally due to easier maths but default orientation is quaternions so can't expect any different)
               */
-            Pose(const position_t&, const orientation_t&) noexcept(false) ;
+            Pose(const position_t&, const quaternion_t&) noexcept(false) ;
 
             /**
               * @brief position - getter method which returns translation
@@ -42,10 +43,10 @@ namespace sdr {
             position_t position() const noexcept ;
 
             /**
-              * @brief orientation - getter method which returns orientation in rotation matrix format
-              * @return sdr::orientation_t - rotation matrix correlating to current orientation
+              * @brief orientation - getter method which returns orientation in quaternion format (not really a getter but oh well)
+              * @return sdr::quaternion_t - quaternion *converted* from rotation matrix property
               */
-            orientation_t orientation() const noexcept ;
+            quaternion_t orientation() const noexcept ;
 
             /**
               * @brief update_position - method which calculates local changes in translation in a global map
@@ -64,27 +65,6 @@ namespace sdr {
               * @throws sdr::DetailedException - thrown in case of invalid angle ranges (angle < -1 || angle > 1)
               */
             void update_orientation(const float, const float, const float) noexcept(false) ;
-
-            /**
-              * @brief calculate_delta_position - static method which calculates local changes in translation in a global map
-              * @param const float - new distance travelled along caertesian x axis
-              * @param const float - new distance travelled along caertesian y axis
-              * @param const float - new distance travelled along caertesian z axis
-              * @param const sdr::orientation_t& - const reference to global orientation
-              * @throws sdr::DetailedException - thrown in case of calculated values involving Nans
-              * @return sdr::position_t - deduced change in translation
-              */
-            static position_t calculate_delta_position(const float, const float, const float, const orientation_t&) noexcept ;
-
-            /**
-              * @brief calculate_delta_orientation - calculate local change based on heading and gyro data
-              * @param const float - yaw angle (rotation *around* caertesian z axis) (left/right)
-              * @param const float - pitch angle (rotation *around* caertesian y axis) (up/down)
-              * @param const float - roll angle (rotation *around* caertesian x axis) (tilting)
-              * @throws sdr::DetailedException - thrown in case of calculated values involving Nans
-              * @return sdr::orientation_t - deduced change in orientation
-              */
-            static orientation_t calculate_delta_orientation(const float, const float, const float) noexcept(false) ;
 
             // below are defaulted and deleted methods
             Pose(const Pose&) noexcept = default ; // copy constructor

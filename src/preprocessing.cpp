@@ -7,6 +7,7 @@
 #include <tuple>
 
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 
 #include "yaml-cpp/yaml.h"
 
@@ -50,50 +51,36 @@ sdr::Pose sdr::extract_initial_pose(const std::string& config_file) noexcept(fal
     }
 
     const YAML::Node config = YAML::LoadFile(config_file) ;
+    auto extract_matrix = [config](const std::string& property) -> std::vector<float> {
 
-    sdr::position_t initial_translation ;
-    {
-        YAML::Node matrix_cont = config["position"] ;
-        const auto col_num = matrix_cont["cols"].as<std::size_t>() ;
-        const auto row_num = matrix_cont["rows"].as<std::size_t>() ;
+        std::size_t row_num, col_num ;
+        YAML::Node mat_data ;
+        try {
+            YAML::Node matrix_cont = config[property] ;
 
-        if(col_num != 3 || row_num != 1)
+            col_num = matrix_cont["cols"].as<std::size_t>() ;
+            row_num = matrix_cont["rows"].as<std::size_t>() ;
+
+            mat_data = matrix_cont["data"] ;
+        }
+        catch(const std::runtime_error& err)
         {
-            const std::string msg{"Translation matrix dimensions provided are invalid. Required: 1*3. Provided: " + std::to_string(row_num) + "*" + std::to_string(col_num)} ;
-            throw sdr::DetailedException(__func__, __LINE__, msg) ;
+            throw sdr::DetailedException(__func__, __LINE__, err.what()) ;
         }
 
-        const auto mat_data = matrix_cont["data"] ;
+        std::vector<float> values(col_num * row_num) ;
         for(std::size_t col = 0 ; col < col_num ; ++col)
         {
             for(std::size_t row = 0 ; row < row_num ; ++row)
             {
-                initial_translation(row, col) = mat_data[col+row].as<float>() ;
+                values[row+col] = mat_data[col+row].as<float>() ;
             }
         }
-    }
+        return values ;
+    } ;
 
-    sdr::orientation_t initial_orientation ;
-    {
-        YAML::Node matrix_cont = config["orientation"] ;
-        const auto col_num = matrix_cont["cols"].as<std::size_t>() ;
-        const auto row_num = matrix_cont["rows"].as<std::size_t>() ;
+    sdr::position_t initial_position = Eigen::Map<decltype(initial_position)>(extract_matrix("position").data()) ;
+    sdr::quaternion_t initial_quaternion = Eigen::Map<decltype(initial_quaternion)>(extract_matrix("orientation").data()) ;
 
-        if(col_num != 3 || row_num != 1)
-        {
-            const std::string msg{"Orientation (rotation) matrix dimensions provided are invalid. Required: 3*3. Provided: " + std::to_string(row_num) + "*" + std::to_string(col_num)} ;
-            throw sdr::DetailedException(__func__, __LINE__, msg) ;
-        }
-
-        const auto mat_data = matrix_cont["data"] ;
-        for(std::size_t row = 0 ; row < row_num ; ++row)
-        {
-            for(std::size_t col = 0 ; col < col_num ; ++col)
-            {
-                initial_orientation(row, col) = mat_data[col+row].as<float>() ;
-            }
-        }
-    }
-
-    return sdr::Pose{initial_translation, initial_orientation} ;
+    return sdr::Pose{initial_position, initial_quaternion} ;
 }
