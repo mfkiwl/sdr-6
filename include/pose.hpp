@@ -50,18 +50,18 @@ namespace sdr {
 
             /**
               * @brief update_position - method which calculates local changes in translation in a global map
-              * @param const float - new distance travelled along caertesian x axis
-              * @param const float - new distance travelled along caertesian y axis
-              * @param const float - new distance travelled along caertesian z axis
+              * @param const float - new distance travelled along x axis
+              * @param const float - new distance travelled along y axis
+              * @param const float - new distance travelled along z axis
               * @throws sdr::DetailedException - thrown in case of invalid angle ranges
               */
             void update_position(const float, const float, const float) noexcept ;
 
             /**
               * @brief update_orientation - calculates and applies local orientation changes in a global map
-              * @param const float - yaw angle in radians (rotation around caertesian z axis)
-              * @param const float - pitch angle in radians (rotation around caertesian y axis)
-              * @param const float - roll angle in radians (rotation around caertesian x axis)
+              * @param const float - yaw angle in radians (rotation around z axis)
+              * @param const float - pitch angle in radians (rotation around y axis)
+              * @param const float - roll angle in radians (rotation around x axis)
               * @throws sdr::DetailedException - thrown in case of invalid angle ranges (angle < -1 || angle > 1)
               */
             void update_orientation(const float, const float, const float) noexcept(false) ;

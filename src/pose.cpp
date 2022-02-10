@@ -52,34 +52,34 @@ void sdr::Pose::update_position(const float delta_x, const float delta_y, const 
     this->_position += delta_translation ;
 }
 
-void sdr::Pose::update_orientation(const float delta_yaw, const float delta_pitch, const float delta_roll) noexcept(false)
+void sdr::Pose::update_orientation(const float yaw, const float pitch, const float roll) noexcept(false)
 {
-    auto valid_angle = [](const float delta_rad_angle) -> bool {
-        return (delta_rad_angle < -2.f || delta_rad_angle > 2.f ? false : true) ;
+    auto valid_angle = [](const float rad_angle) -> bool {
+        return (rad_angle < -2.f || rad_angle > 2.f ? false : true) ;
     } ;
 
-    if(!(valid_angle(delta_yaw) && valid_angle(delta_pitch) && valid_angle(delta_yaw)))
+    if(!(valid_angle(yaw) && valid_angle(pitch) && valid_angle(yaw)))
     {
-        const std::string msg{ "Ill ranging values (radians have a max radian degree of 2 and a min radian degree of -2). Values provided: " + std::to_string(delta_yaw) + ", " + std::to_string(delta_pitch) + ", " + std::to_string(delta_roll) } ;
+        const std::string msg{ "Ill ranging values (radians have a max radian degree of 2 and a min radian degree of -2). Values provided: " + std::to_string(yaw) + ", " + std::to_string(pitch) + ", " + std::to_string(roll) } ;
         throw sdr::DetailedException(__func__, __LINE__, msg) ;
     }
 
     const sdr::rotation_m_t rot_matrix_yaw{ // rotation around z axis (left/right)
-                                                {std::cos(delta_yaw),std::asin(delta_yaw),0.f},
-                                                {std::sin(delta_yaw),std::cos(delta_yaw),0.f},
+                                                {std::cos(yaw),std::asin(yaw),0.f},
+                                                {std::sin(yaw),std::cos(yaw),0.f},
                                                 {0.f,0.f,1.f}
                                             } ;
 
     const sdr::rotation_m_t rot_matrix_pitch{ // rotation around y axis (up/down)
-                                                 {std::cos(delta_pitch),0.f,std::sin(delta_pitch)},
+                                                 {std::cos(pitch),0.f,std::sin(pitch)},
                                                  {0.f,1.f,0.f},
-                                                 {std::asin(delta_pitch),0.f,std::cos(delta_pitch)}
+                                                 {std::asin(pitch),0.f,std::cos(pitch)}
                                              } ;
 
     const sdr::rotation_m_t rot_matrix_roll{ // rotation around x axis (tilting) (won't be applicable to cars etc.)
                                                {1.f,0.f,0.f},
-                                               {0.f,std::cos(delta_roll),std::asin(delta_roll)},
-                                               {0.f,std::sin(delta_roll),std::cos(delta_roll)}
+                                               {0.f,std::cos(roll),std::asin(roll)},
+                                               {0.f,std::sin(roll),std::cos(roll)}
                                            } ;
 
     const sdr::rotation_m_t delta_orientation = rot_matrix_yaw * rot_matrix_pitch * rot_matrix_roll ;
