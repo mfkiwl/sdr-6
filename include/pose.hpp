@@ -2,6 +2,8 @@
 #define POSE_HPP
 #pragma once
 
+#include <fstream>
+
 #include <Eigen/Dense>
 
 /**
@@ -73,7 +75,17 @@ namespace sdr {
             Pose& operator=(Pose&&) noexcept = default ; // move assignment operator
             ~Pose() noexcept = default ;
 
+            friend ::std::ostream& operator<<(::std::ostream&, const Pose&) noexcept ;
+
     } ;
+
+    /**
+      * @brief output stream operator (<<) (overload) - function to print Pose object
+      * @param std::ostream& - reference to out stream object to write text to
+      * @param const Pose& - const reference to Pose object
+      * @return std::ostream& - reference to updated out stream object
+      */
+    ::std::ostream& operator<<(::std::ostream&, const Pose&) noexcept ;
 
 }
 

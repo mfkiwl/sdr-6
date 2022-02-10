@@ -97,11 +97,11 @@ int main(int argc, char** argv)
 
         pose.update_position(distance_x, distance_y, distance_z) ;
         pose.update_orientation(delta_yaw, delta_pitch, delta_roll) ;
-        std::cout << "Global position:\n\t" << pose.position() << std::endl ;
-        std::cout << "Global orientation:\n\t" << pose.orientation() << std::endl ;
+        std::cout << pose << std::endl ;
     }
 
-    std::cout << "Final position: " << pose.position() << std::endl ;
+    std::cout << "Final:\n\t" ;
+    std::cout << pose << std::endl ;
     //
     return 0 ;
 }

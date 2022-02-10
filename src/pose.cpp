@@ -85,3 +85,9 @@ void sdr::Pose::update_orientation(const float yaw, const float pitch, const flo
     const sdr::rotation_m_t delta_orientation = rot_matrix_yaw * rot_matrix_pitch * rot_matrix_roll ;
     this->_orientation *= delta_orientation ;
 }
+
+std::ostream& sdr::operator<<(::std::ostream& os, const sdr::Pose& pose) noexcept
+{
+    os << "Position: " << pose._position << ". Orientation: " << pose.orientation() ;
+    return os ;
+}
