@@ -33,7 +33,7 @@ add_library(pose.o src/pose.cpp)
 target_link_libraries(pose.o detailed_exception.o m)
 
 add_library(preprocessing.o src/preprocessing.cpp)
-target_link_libraries(preprocessing.o detailed_exception.o pose.o libyaml-cpp.a)
+target_link_libraries(preprocessing.o detailed_exception.o pose.o yaml-cpp)
 
 add_executable(sdr src/source.cpp)
 target_link_libraries(sdr pose.o detailed_exception.o preprocessing.o)
