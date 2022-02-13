@@ -8,9 +8,6 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -g")
 
 find_package(Eigen3 REQUIRED)
 
-add_subdirectory(libraries/kalman-cpp/)
-add_subdirectory(libraries/yaml-cpp/)
-
 set(CMAKE_BINARY_DIR "bin/")
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
@@ -19,6 +16,9 @@ set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 
 set(LIBRARY_OUTPUT_DIRECTORY "lib/")
 set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+
+add_subdirectory(libraries/kalman/)
+add_subdirectory(libraries/yaml-cpp/)
 
 include_directories(
     ${EIGEN3_INCLUDE_DIR}
