@@ -22,11 +22,6 @@ sdr::Pose::Pose() noexcept
 
 sdr::Pose::Pose(const sdr::position_t& initial_position, const sdr::quaternion_t& initial_orientation) noexcept(false)
 {
-    if(initial_position.rows() != 1 || initial_position.cols() != 3)
-    {
-        const std::string msg{"Translation matrix dimensions provided are invalid. Required: 1*3. Provided: " + std::to_string(initial_position.rows()) + "*" + std::to_string(initial_position.cols())} ;
-        throw sdr::DetailedException(__func__, __LINE__, msg) ;
-    }
     this->_position = initial_position ;
 
     this->_orientation = initial_orientation.normalized().toRotationMatrix() ; // checks will occur before this point to ensure it is in valid quaternion format

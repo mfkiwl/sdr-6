@@ -14,18 +14,18 @@
 namespace sdr {
 
     /**
-      * @brief is_meta_directory (overload) - determines whether given name of path is to a directory
+      * @brief is_meta_file (overload) - determines whether given name of path is to a file
       * @param const std::string& - const lvalue reference to string storing path name to test
       * @return bool - whether given path leads to directory
       */
-    bool is_meta_directory(const std::string&) noexcept ;
+    bool is_meta_file(const std::string&) noexcept ;
 
     /**
-      * @brief is_meta_directory (overload) - determines whether given name of path is to a directory
-      * @param const std::filesystem::path& - const lvalue reference to filesystem path object initialised to path
+      * @brief is_meta_file (overload) - determines whether given name of path is to a file
+      * @param const std::filesystem::path& - const lvalue reference to filesystem object initialised to path
       * @return bool - whether given path leads to directory
       */
-    bool is_meta_directory(const std::filesystem::path&) noexcept ;
+    bool is_meta_file(const std::filesystem::path&) noexcept ;
 
     /**
       * @brief is_meta_yaml (overload) - determines whether given name of path is to a YAML file

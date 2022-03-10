@@ -15,7 +15,34 @@
 #include "pose.hpp"
 #include "preprocessing.hpp"
 
-/** @brief File contains the definitions related to preprocessing necessary data for sdr system **/
+/**
+  * @brief File contains the definitions related to preprocessing necessary data for sdr system
+  */
+
+bool sdr::is_meta_file(const std::string& file_name) noexcept
+{
+    const std::filesystem::path file_object(file_name) ;
+    return sdr::is_meta_file(file_object) ;
+}
+
+bool sdr::is_meta_file(const std::filesystem::path& file_object) noexcept
+{
+    if(!std::filesystem::is_regular_file(file_object))
+    {
+        return false ;
+    }
+    else if(std::filesystem::is_symlink(file_object))
+    {
+        std::error_code error_code ;
+        const std::filesystem::path re_file_object = std::filesystem::read_symlink(file_object, error_code) ;
+        if(!error_code || !std::filesystem::is_regular_file(re_file_object))
+        {
+            return false ;
+        }
+    }
+
+    return true ;
+}
 
 bool sdr::is_meta_yaml(const std::string& file_name) noexcept
 {

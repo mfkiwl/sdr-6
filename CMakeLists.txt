@@ -23,8 +23,9 @@ add_subdirectory(libraries/yaml-cpp/)
 include_directories(
     ${EIGEN3_INCLUDE_DIR}
     include/
-    libraries/*/include
+    # libraries/*/include
     libraries/
+    libraries/kalman/include/
 )
 
 add_library(detailed_exception.o src/detailed_exception.cpp)

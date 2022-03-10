@@ -17,9 +17,9 @@ namespace sdr {
     using quaternion_t = Eigen::Quaternion<float, Eigen::AutoAlign> ; // 4 * 1 matrix
 
     class Pose {
-            /**
-              * @brief Pose (class) - class to analyse validity and track pose related information
-              */
+    /**
+      * @brief Pose (class) - class to analyse validity and track pose related information
+      */
        private:
             position_t _position ;
 

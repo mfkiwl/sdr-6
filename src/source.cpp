@@ -1,10 +1,15 @@
 #include <iostream>
 #include <fstream>
+#include <utility>
+
 #include <argp.h>
+
+#include <kalman/UnscentedKalmanFilter.hpp>
 
 #include "preprocessing.hpp"
 #include "detailed_exception.hpp"
 #include "pose.hpp"
+#include "unscented_kalman_support.hpp"
 
 /**
   * @brief Main source file managing sdr system
@@ -76,32 +81,91 @@ int main(int argc, char** argv)
     } ;
     argp_parse(&argp, argc, argv, 0, 0, &arguments); // override default arguments if provided
 
+    if(!sdr::is_meta_file(std::string(arguments.args[0])))
+    {
+        const std::string msg = "'" + std::string(arguments.args[0]) + "' is not a valid file or a symlink to a valid file" ;
+        throw sdr::DetailedException(__func__, static_cast<unsigned int>(__LINE__), msg) ;
+    }
+    std::fstream input(std::string{arguments.args[0]}) ; // initialise text stream object of movement logs etc.
+
     sdr::Pose pose ; // empty 0 default initialisation
     if(arguments.initial_pose_file)
     {
         pose = sdr::extract_initial_pose(std::string(arguments.initial_pose_file)) ; // actually extract information from given file
     }
+    std::cout << "Starting:\n\t" << pose << std::endl ;
 
-    std::fstream input(std::string{arguments.args[0]}) ;
-    while(!input.eof())
+    /* Set up Kalman filter vectors */
+    sdr::KalmanState state ;
+    state.setZero() ;
+    sdr::KalmanControl control ;
+    Kalman::UnscentedKalmanFilter<sdr::KalmanState> ukf(1) ; // convariance
+    ukf.init(state) ;
+    sdr::SystemModel sys_model ;
+    sdr::MeasurementModel measurement_model ;
+
+    while(true)
     {
-        float distance_x = 0.f ;
-        float distance_y = 0.f ;
-        float distance_z = 0.f ;
+        float distance_x_askd = 0.f ;
+        float distance_y_askd = 0.f ;
+        float distance_z_askd = 0.f ;
+        float delta_yaw_askd = 0.f ;
+        float delta_pitch_askd = 0.f ;
+        float delta_roll_askd = 0.f ;
 
-        float delta_yaw = 0.f ;
-        float delta_pitch = 0.f ;
-        float delta_roll = 0.f ;
+        float distance_x_sensd = 0.f ;
+        float distance_y_sensd = 0.f ;
+        float distance_z_sensd = 0.f ;
+        float delta_yaw_sensd = 0.f ;
+        float delta_pitch_sensd = 0.f ;
+        float delta_roll_sensd = 0.f ;
 
-        input >> distance_x >> distance_y >> distance_z >> delta_yaw >> delta_pitch >> delta_roll ;
+        input >> distance_x_askd >> distance_y_askd >> distance_z_askd >> delta_yaw_askd >> delta_pitch_askd >> delta_roll_askd ;
+        input >> distance_x_sensd >> distance_y_sensd >> distance_z_sensd >> delta_yaw_sensd >> delta_pitch_sensd >> delta_roll_sensd ;
 
-        pose.update_position(distance_x, distance_y, distance_z) ;
-        pose.update_orientation(delta_yaw, delta_pitch, delta_roll) ;
-        std::cout << pose << std::endl ;
+        if(input.eof())
+        {
+            break ;
+        }
+
+        /* Set control vector values - values which were actually requested */
+        control.delta_x() = distance_x_askd ;
+        control.delta_y() = distance_y_askd ;
+        control.delta_z() = distance_z_askd ;
+        control.delta_yaw() = delta_yaw_askd ;
+        control.delta_pitch() = delta_pitch_askd ;
+        control.delta_roll() = delta_roll_askd ;
+
+        /* Based on requested values, simulate what the values would ideally be  */
+        state = sys_model.f(state, control) ;
+        std::cout << "state guessed " << state << std::endl ;
+
+        /* Now make a different object which stores what was ACTUALLY recorded */
+
+//        state.delta_x() = distance_x_sensd ;
+//        state.delta_y() = distance_y_sensd ;
+//        state.delta_z() = distance_z_sensd ;
+//        state.delta_yaw() = delta_yaw_sensd ;
+//        state.delta_pitch() = delta_pitch_sensd ;
+//        state.delta_roll() = delta_roll_sensd ;
+//
+//        auto ukf_pred = ukf.predict(sys_model, control) ; // predict values of next time-step
+        sdr::Measurement measurement = measurement_model.h(state) ;
+        sdr::KalmanState ukf_pred = ukf.update(measurement_model, measurement) ; // Update UKF
+
+//        std::cout << "ukf guessed x: " << ukf_pred.x() << std::endl ;
+//        std::cout << "ukf guessed y: " << ukf_pred.y() << std::endl ;
+//        std::cout << "ukf guessed z: " << ukf_pred.z() << std::endl ;
+//        std::cout << "ukf guessed yaw: " << ukf_pred.yaw() << std::endl ;
+//        std::cout << "ukf guessed pitch: " << ukf_pred.pitch() << std::endl ;
+//        std::cout << "ukf guessed roll: " << ukf_pred.roll() << std::endl ;
+//
+//        pose.update_position(ukf_pred.x(), ukf_pred.y(), ukf_pred.z()) ;
+//        pose.update_orientation(delta_yaw, delta_pitch, delta_roll) ;
+//        std::cout << pose << std::endl ;
     }
 
-    std::cout << "Final:\n\t" ;
-    std::cout << pose << std::endl ;
+//    std::cout << "Final:\n\t" << pose << std::endl ;
     //
     return 0 ;
 }
