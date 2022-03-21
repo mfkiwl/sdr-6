@@ -12,13 +12,13 @@
 
 namespace sdr {
 
-    using position_t = Eigen::Matrix<float, 1, 3> ; // 1 * 3 matrix (xyz position)
-    using rotation_m_t = Eigen::Matrix<float, 3, 3> ; // 3 * 3 matrix (rot. matrix)
-    using quaternion_t = Eigen::Quaternion<float, Eigen::AutoAlign> ; // 4 * 1 matrix
+    using position_t = Eigen::Matrix<double, 1, 3> ; // 1 * 3 matrix (xyz position)
+    using rotation_m_t = Eigen::Matrix<double, 3, 3> ; // 3 * 3 matrix (rot. matrix)
+    using quaternion_t = Eigen::Quaternion<double, Eigen::AutoAlign> ; // 4 * 1 matrix
 
     class Pose {
     /**
-      * @brief Pose (class) - class to analyse validity and track pose related information
+      * @brief Pose (class) - class to strictly to manage pose information (ie. distance and orientation changes)
       */
        private:
             position_t _position ;
@@ -52,21 +52,21 @@ namespace sdr {
 
             /**
               * @brief update_position - method which calculates local changes in translation in a global map
-              * @param const float - new distance travelled along x axis
-              * @param const float - new distance travelled along y axis
-              * @param const float - new distance travelled along z axis
+              * @param const double - new distance travelled along x axis
+              * @param const double - new distance travelled along y axis
+              * @param const double - new distance travelled along z axis
               * @throws sdr::DetailedException - thrown in case of invalid angle ranges
               */
-            void update_position(const float, const float, const float) noexcept ;
+            void update_position(const double, const double, const double) noexcept ;
 
             /**
               * @brief update_orientation - calculates and applies local orientation changes in a global map
-              * @param const float - yaw angle in radians (rotation around z axis)
-              * @param const float - pitch angle in radians (rotation around y axis)
-              * @param const float - roll angle in radians (rotation around x axis)
+              * @param const double - yaw angle in radians (rotation around z axis)
+              * @param const double - pitch angle in radians (rotation around y axis)
+              * @param const double - roll angle in radians (rotation around x axis)
               * @throws sdr::DetailedException - thrown in case of invalid angle ranges (angle < -1 || angle > 1)
               */
-            void update_orientation(const float, const float, const float) noexcept(false) ;
+            void update_orientation(const double, const double, const double) noexcept(false) ;
 
             // below are defaulted and deleted methods
             Pose(const Pose&) noexcept = default ; // copy constructor
@@ -87,6 +87,13 @@ namespace sdr {
       */
     ::std::ostream& operator<<(::std::ostream&, const Pose&) noexcept ;
 
-}
+    /**
+      * @brief velocities_to_deltas - uses time information to return distances / angles achieved on / around each axis based on given velocities
+      * @param const std::vector<double>& - const reference to list of velocities recorded on / around a given axis
+      * @return std::vector<double> - list of distances / angles calculated around a given axis
+      */
+    std::vector<double> velocities_to_deltas(const ::std::vector<double>&, const double) noexcept ;
+
+} ; // namespace sdr
 
 #endif // POSE_HPP

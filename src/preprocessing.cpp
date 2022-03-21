@@ -78,7 +78,7 @@ sdr::Pose sdr::extract_initial_pose(const std::string& config_file) noexcept(fal
     }
 
     const YAML::Node config = YAML::LoadFile(config_file) ;
-    auto extract_matrix = [config](const std::string& property) -> std::vector<float> {
+    auto extract_matrix = [config](const std::string& property) -> std::vector<double> {
 
         std::size_t row_num, col_num ;
         YAML::Node mat_data ;
@@ -95,12 +95,12 @@ sdr::Pose sdr::extract_initial_pose(const std::string& config_file) noexcept(fal
             throw sdr::DetailedException(__func__, __LINE__, err.what()) ;
         }
 
-        std::vector<float> values(col_num * row_num) ;
+        std::vector<double> values(col_num * row_num) ;
         for(std::size_t col = 0 ; col < col_num ; ++col)
         {
             for(std::size_t row = 0 ; row < row_num ; ++row)
             {
-                values[row+col] = mat_data[col+row].as<float>() ;
+                values[row+col] = mat_data[col+row].as<double>() ;
             }
         }
         return values ;

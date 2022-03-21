@@ -1,5 +1,6 @@
 #include <cmath>
 #include <string>
+#include <cstddef>
 
 #include <Eigen/Geometry>
 
@@ -37,7 +38,7 @@ sdr::quaternion_t sdr::Pose::orientation() const noexcept
     return sdr::quaternion_t{this->_orientation} ;
 }
 
-void sdr::Pose::update_position(const float delta_x, const float delta_y, const float delta_z) noexcept
+void sdr::Pose::update_position(const double delta_x, const double delta_y, const double delta_z) noexcept
 {
         // caertesian 3d coordinates
     sdr::position_t delta_translation{
@@ -47,9 +48,9 @@ void sdr::Pose::update_position(const float delta_x, const float delta_y, const 
     this->_position += delta_translation ;
 }
 
-void sdr::Pose::update_orientation(const float yaw, const float pitch, const float roll) noexcept(false)
+void sdr::Pose::update_orientation(const double yaw, const double pitch, const double roll) noexcept(false)
 {
-    auto valid_angle = [](const float rad_angle) -> bool {
+    auto valid_angle = [](const double rad_angle) -> bool {
         return (rad_angle < -2.f || rad_angle > 2.f ? false : true) ;
     } ;
 
@@ -79,6 +80,18 @@ void sdr::Pose::update_orientation(const float yaw, const float pitch, const flo
 
     const sdr::rotation_m_t delta_orientation = rot_matrix_yaw * rot_matrix_pitch * rot_matrix_roll ;
     this->_orientation *= delta_orientation ;
+}
+
+std::vector<double> sdr::velocities_to_deltas(const std::vector<double>& velocities, const double time) noexcept
+{
+    std::vector<double> deltas(velocities.size()) ;
+
+    for(std::size_t i = 0 ; i < deltas.size() ; ++i)
+    {
+        deltas[i] = velocities[i] * time ;
+    }
+
+    return deltas ;
 }
 
 std::ostream& sdr::operator<<(::std::ostream& os, const sdr::Pose& pose) noexcept

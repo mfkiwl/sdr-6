@@ -1,6 +1,3 @@
-[submodule "libraries/kalman"]
-	path = libraries/kalman
-	url = git@github.com:mherb/kalman.git
 [submodule "libraries/yaml-cpp"]
 	path = libraries/yaml-cpp
 	url = git@github.com:jbeder/yaml-cpp.git

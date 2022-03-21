@@ -17,7 +17,6 @@ set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY})
 set(LIBRARY_OUTPUT_DIRECTORY "lib/")
 set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
-add_subdirectory(libraries/kalman/)
 add_subdirectory(libraries/yaml-cpp/)
 
 include_directories(
@@ -25,7 +24,6 @@ include_directories(
     include/
     # libraries/*/include
     libraries/
-    libraries/kalman/include/
 )
 
 add_library(detailed_exception.o src/detailed_exception.cpp)

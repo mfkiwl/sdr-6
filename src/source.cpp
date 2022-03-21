@@ -1,15 +1,16 @@
 #include <iostream>
 #include <fstream>
 #include <utility>
+#include <cstdlib>
+#include <tuple>
+#include <vector>
+#include <array>
 
 #include <argp.h>
-
-#include <kalman/UnscentedKalmanFilter.hpp>
 
 #include "preprocessing.hpp"
 #include "detailed_exception.hpp"
 #include "pose.hpp"
-#include "unscented_kalman_support.hpp"
 
 /**
   * @brief Main source file managing sdr system
@@ -19,7 +20,7 @@
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers" // Below is some argp stuff. I'm ignoring some of the 'errors'
 #pragma GCC diagnostic push
 
-    static char args_doc[] = "LOG_PATH" ; // description of non-option specified command line arguments
+    static char args_doc[] = "LOG_PATH NUM_SOURCES" ; // description of non-option specified command line arguments
     static char doc[] = "sdr -- a simple dead reckoning application" ; // general program documentation
     const char* argp_program_bug_address = "salih.msa@outlook.com" ;
     static struct argp_option options[] = {
@@ -28,7 +29,7 @@
     } ;
     struct arguments {
         /** @brief struct arguments - this structure is used to communicate with parse_opt (for it to store the values it parses within it) **/
-        char* args[2] ;  /* args for params */
+        char* args[3] ;  /* args for params */
         char* initial_pose_file ;
     } ;
 
@@ -48,14 +49,14 @@
                 arguments->initial_pose_file = arg ;
                 break ;
             case ARGP_KEY_ARG:
-                if(state->arg_num >= 2)
+                if(state->arg_num >= 3)
                 {
                     argp_usage(state);
                 }
                 arguments->args[state->arg_num] = arg;
                 break;
             case ARGP_KEY_END:
-                if (state->arg_num < 1)
+                if (state->arg_num < 2)
                 {
                     argp_usage(state);
                 }
@@ -67,6 +68,46 @@
     }
 
 #pragma GCC diagnostic pop // end of argp, so end of repressing weird messages
+
+namespace sdr {
+
+    /**
+      * @brief read_log_entry - reads entry to log (twist message and time spent doing said velocity) from text file. not really useful for general dead reckoning purposes, hence in this example usage file
+      * @param std::istream& - mutable reference to input stream object connected log file
+      * @param const std::size_t - number of different inputs / sensor readings for each given entry (ie. 2 sensors reporting twist msgs for each entry)
+      */
+    ::std::tuple<\
+               ::std::vector<double>, ::std::vector<double>, ::std::vector<double>, \
+               ::std::vector<double>, ::std::vector<double>, ::std::vector<double>, \
+               double\
+              > read_log_entry(::std::istream& input, const ::std::size_t number_of_sources) noexcept(false)
+    {
+        /* Read in velocity values along each axis as well as time spent in said velocities */
+        static std::vector<double> linear_vels_x(number_of_sources), linear_vels_y(number_of_sources), linear_vels_z(number_of_sources) ;
+        static std::vector<double> angular_vels_x(number_of_sources), angular_vels_y(number_of_sources), angular_vels_z(number_of_sources) ;
+        double time = 0.f ;
+
+        for(std::size_t i = 0 ; i < number_of_sources ; ++i)
+        {
+            input >> linear_vels_x[i] >> linear_vels_y[i] >> linear_vels_z[i] ;
+            input >> angular_vels_x[i] >> angular_vels_y[i] >> angular_vels_z[i] ;
+        }
+        input >> time ;
+
+        if(input.eof()) // if the full read was not successful
+        {
+            const std::string msg = "Reading entry failed due to incompleteness" ;
+            throw sdr::DetailedException(__func__, static_cast<unsigned int>(__LINE__), msg) ;
+        }
+
+        return {
+            linear_vels_x, linear_vels_y, linear_vels_z,
+            angular_vels_x, angular_vels_y, angular_vels_z,
+            time
+        } ;
+    }
+
+} ; // namespace sdr
 
 int main(int argc, char** argv)
 {
@@ -88,84 +129,52 @@ int main(int argc, char** argv)
     }
     std::fstream input(std::string{arguments.args[0]}) ; // initialise text stream object of movement logs etc.
 
-    sdr::Pose pose ; // empty 0 default initialisation
+    const int number_of_sources = std::atoi(arguments.args[1]) ;
+    if(number_of_sources < 1)
+    {
+        const std::string msg = "'" + std::to_string(number_of_sources) + "' provided as the number of sources - should be a positive non-zero integer" ;
+        throw sdr::DetailedException(__func__, static_cast<unsigned int>(__LINE__), msg) ;
+    }
+
+    sdr::Pose pose ; // empty 0 center default initialisation
     if(arguments.initial_pose_file)
     {
         pose = sdr::extract_initial_pose(std::string(arguments.initial_pose_file)) ; // actually extract information from given file
     }
     std::cout << "Starting:\n\t" << pose << std::endl ;
 
-    /* Set up Kalman filter vectors */
-    sdr::KalmanState state ;
-    state.setZero() ;
-    sdr::KalmanControl control ;
-    Kalman::UnscentedKalmanFilter<sdr::KalmanState> ukf(1) ; // convariance
-    ukf.init(state) ;
-    sdr::SystemModel sys_model ;
-    sdr::MeasurementModel measurement_model ;
-
-    while(true)
+    /* Main functionality */
+    auto at_end = [&]() -> bool
     {
-        float distance_x_askd = 0.f ;
-        float distance_y_askd = 0.f ;
-        float distance_z_askd = 0.f ;
-        float delta_yaw_askd = 0.f ;
-        float delta_pitch_askd = 0.f ;
-        float delta_roll_askd = 0.f ;
-
-        float distance_x_sensd = 0.f ;
-        float distance_y_sensd = 0.f ;
-        float distance_z_sensd = 0.f ;
-        float delta_yaw_sensd = 0.f ;
-        float delta_pitch_sensd = 0.f ;
-        float delta_roll_sensd = 0.f ;
-
-        input >> distance_x_askd >> distance_y_askd >> distance_z_askd >> delta_yaw_askd >> delta_pitch_askd >> delta_roll_askd ;
-        input >> distance_x_sensd >> distance_y_sensd >> distance_z_sensd >> delta_yaw_sensd >> delta_pitch_sensd >> delta_roll_sensd ;
-
+        input.get() ;
+        input.get() ;
         if(input.eof())
-        {
-            break ;
-        }
+            return true ;
+        input.unget() ;
+        input.unget() ;
+        return false ;
+    } ;
 
-        /* Set control vector values - values which were actually requested */
-        control.delta_x() = distance_x_askd ;
-        control.delta_y() = distance_y_askd ;
-        control.delta_z() = distance_z_askd ;
-        control.delta_yaw() = delta_yaw_askd ;
-        control.delta_pitch() = delta_pitch_askd ;
-        control.delta_roll() = delta_roll_askd ;
+    while(!at_end())
+    {
+        /* Read in velocity values along each axis as well as time spent in said velocities */
+        const auto [linear_vels_x, linear_vels_y, linear_vels_z, angular_vels_x, angular_vels_y, angular_vels_z, time] = sdr::read_log_entry(input, static_cast<std::size_t>(number_of_sources)) ;
 
-        /* Based on requested values, simulate what the values would ideally be  */
-        state = sys_model.f(state, control) ;
-        std::cout << "state guessed " << state << std::endl ;
+        /* Process preliminary input */
+        const auto deltas_x = sdr::velocities_to_deltas(linear_vels_x, time) ;
+        const auto deltas_y = sdr::velocities_to_deltas(linear_vels_y, time) ;
+        const auto deltas_z = sdr::velocities_to_deltas(linear_vels_z, time) ;
+        const auto rolls = sdr::velocities_to_deltas(angular_vels_x, time) ;
+        const auto pitches = sdr::velocities_to_deltas(angular_vels_y, time) ;
+        const auto yaws = sdr::velocities_to_deltas(angular_vels_z, time) ;
 
-        /* Now make a different object which stores what was ACTUALLY recorded */
-
-//        state.delta_x() = distance_x_sensd ;
-//        state.delta_y() = distance_y_sensd ;
-//        state.delta_z() = distance_z_sensd ;
-//        state.delta_yaw() = delta_yaw_sensd ;
-//        state.delta_pitch() = delta_pitch_sensd ;
-//        state.delta_roll() = delta_roll_sensd ;
-//
-//        auto ukf_pred = ukf.predict(sys_model, control) ; // predict values of next time-step
-        sdr::Measurement measurement = measurement_model.h(state) ;
-        sdr::KalmanState ukf_pred = ukf.update(measurement_model, measurement) ; // Update UKF
-
-//        std::cout << "ukf guessed x: " << ukf_pred.x() << std::endl ;
-//        std::cout << "ukf guessed y: " << ukf_pred.y() << std::endl ;
-//        std::cout << "ukf guessed z: " << ukf_pred.z() << std::endl ;
-//        std::cout << "ukf guessed yaw: " << ukf_pred.yaw() << std::endl ;
-//        std::cout << "ukf guessed pitch: " << ukf_pred.pitch() << std::endl ;
-//        std::cout << "ukf guessed roll: " << ukf_pred.roll() << std::endl ;
-//
-//        pose.update_position(ukf_pred.x(), ukf_pred.y(), ukf_pred.z()) ;
-//        pose.update_orientation(delta_yaw, delta_pitch, delta_roll) ;
-//        std::cout << pose << std::endl ;
+        /* Process final output */
+        pose.update_position(deltas_x[0], deltas_y[0], deltas_z[0]) ;
+        pose.update_orientation(rolls[0], pitches[0], yaws[0]) ;
+        std::cout << pose << std::endl ;
     }
 
-//    std::cout << "Final:\n\t" << pose << std::endl ;
+    std::cout << "Final:\n\t" << pose << std::endl ;
     //
     return 0 ;
 }
