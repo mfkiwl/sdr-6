@@ -75,6 +75,11 @@ namespace sdr {
       * @brief read_log_entry - reads entry to log (twist message and time spent doing said velocity) from text file. not really useful for general dead reckoning purposes, hence in this example usage file
       * @param std::istream& - mutable reference to input stream object connected log file
       * @param const std::size_t - number of different inputs / sensor readings for each given entry (ie. 2 sensors reporting twist msgs for each entry)
+      * @return std::tuple<
+                    std::vector<double>, std::vector<double>, std::vector<double>,
+                    std::vector<double>, std::vector<double>, std::vector<double>,
+                    double
+                    > - tuple of values read (6 vectors representing xyz linear and xyz angular velocities and time they were applicable for)
       */
     ::std::tuple<\
                ::std::vector<double>, ::std::vector<double>, ::std::vector<double>, \
