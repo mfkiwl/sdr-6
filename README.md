@@ -5,8 +5,12 @@ Basic three dimensional dead reckoning implementation.
 
 ### Running `sdr`
 
-### Building file
-[CMake](https://cmake.org/) is a prerequisite to build this program. Simply running `cmake .` && `cmake --build .` from the source directory should do the trick
+#### Building file
+This program was designed and built against CXX standard 20 - no back-compatability support is guaranteed for older compilers / standards
+
+[Eigen](https://eigen.tuxfamily.org/), version 3.4.0 and onwards, is a prerequisite library.
+
+[CMake](https://cmake.org/), version 3.16.3 and onwards, serves as the metabuild system and therefore also is a prerequisite to build this program. Simply running `cmake .` && `cmake --build .` from the source directory should do the trick.
 
 #### Executing file
 
